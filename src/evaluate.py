@@ -7,6 +7,21 @@ from model import ImageClassifier
 from data_loader import get_num_classes
 import matplotlib.pyplot as plt
 
+def get_device(prefer="mps"):
+    """Return a torch.device, preferring MPS, then CUDA, then CPU."""
+    # Try MPS first (macOS), if requested and available
+    try:
+        if prefer == "mps" and getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
+            return torch.device("mps")
+    except Exception:
+        # If checking MPS availability throws, ignore and continue
+        pass
+    # Next try CUDA
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    # Fallback to CPU
+    return torch.device("cpu")
+
 def get_emnist_mapping(split="balanced"):
     """Get character mapping for EMNIST splits."""
     # EMNIST balanced uses specific character mappings
@@ -30,7 +45,7 @@ def get_emnist_mapping(split="balanced"):
 def predict_image(image_path, model_path=None, split="balanced", device="mps"):
     # Default model path
     if model_path is None:
-        model_path = f"model_state_emnist_{split}.pt"
+        model_path = f"src/model_state_emnist_{split}.pt"
     
     # Load checkpoint
     checkpoint = torch.load(model_path, map_location=device)
