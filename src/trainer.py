@@ -3,16 +3,21 @@ from torch import save
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from model import ImageClassifier
-from data_loader import get_data_loader
+from data_loader import get_data_loader, get_num_classes
 from utils import get_device
 import matplotlib.pyplot as plt
 
-def train_model(epochs=10, lr=1e-3, device="mps"):
-    loss_history = []  # List to track losses
-    model = ImageClassifier().to(device)
+def train_model(epochs=10, lr=1e-3, split="balanced", device="mps"):
+    loss_history = []
+    
+    # Get number of classes for the chosen split
+    num_classes = get_num_classes(split)
+    print(f"Training on EMNIST '{split}' split with {num_classes} classes")
+    
+    model = ImageClassifier(num_classes=num_classes).to(device)
     optimizer = Adam(model.parameters(), lr=lr)
     loss_fn = CrossEntropyLoss()
-    data_loader = get_data_loader()
+    data_loader = get_data_loader(split=split)
 
     for epoch in range(epochs):
         total_loss = 0
@@ -31,26 +36,41 @@ def train_model(epochs=10, lr=1e-3, device="mps"):
             total_loss += loss.item()
         epoch_loss = total_loss/len(data_loader)
         loss_history.append(epoch_loss)
-        print(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss}")
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss:.4f}")
 
-    
-    with open('model_state.pt', 'wb') as f: 
-        save(model.state_dict(), f)
-    print("Training complete! Model saved as 'model_state.pt'.")
+    # Save model with split info in filename
+    model_filename = f'model_state_emnist_{split}.pt'
+    save_dict = {
+        'model_state_dict': model.state_dict(),
+        'num_classes': num_classes,
+        'split': split
+    }
+    with open(model_filename, 'wb') as f: 
+        save(save_dict, f)
+    print(f"Training complete! Model saved as '{model_filename}'.")
     
     # Plot loss curve
     plt.plot(range(1, epochs + 1), loss_history, marker='o')
-    plt.title("Training Loss")
+    plt.title(f"Training Loss - EMNIST {split}")
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.grid()
-    plt.savefig("training_loss_curve.png")
+    plt.savefig(f"training_loss_curve_emnist_{split}.png")
     plt.show()
 
 
 if __name__ == "__main__":
     # Device setup
     device = get_device()
-    epochs_count = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+    
+    # Parse command line arguments
+    epochs_count = 10
+    split = "balanced"
+    
+    if len(sys.argv) > 1:
+        epochs_count = int(sys.argv[1])
+    if len(sys.argv) > 2:
+        split = sys.argv[2]
+    
     print(f"Using device: {device}")
-    train_model(epochs=epochs_count,device=device)
+    train_model(epochs=epochs_count, split=split, device=device)
