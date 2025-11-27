@@ -11,6 +11,7 @@ project/
 # Model outputs (if you want to exclude them)
 *.pt
 *.pth
+*.pkl
 
 # IDE
 .vscode/
@@ -19,5 +20,6 @@ project/
 # OS
 .DS_Store
 
-#data file
+#data files
 data/
+checkpoints/

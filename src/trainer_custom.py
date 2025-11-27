@@ -3,27 +3,26 @@ from torch import save
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from model import ImageClassifier
-from data_loader import get_data_loader, get_num_classes
+from custom_data_loader import get_data_loader_custom, get_num_classes_custom
 from utils import get_device
 import matplotlib.pyplot as plt
 
-def train_model(epochs=10, lr=1e-3, split="balanced", device="mps"):
+def train_model_custom(epochs=10, lr=1e-3, split="letters", device="cpu"):
+    """Train model using custom EMNIST data loader."""
     loss_history = []
     
     # Get number of classes for the chosen split
-    num_classes = get_num_classes(split)
+    num_classes = get_num_classes_custom(split)
     print(f"Training on EMNIST '{split}' split with {num_classes} classes")
     
     model = ImageClassifier(num_classes=num_classes).to(device)
     optimizer = Adam(model.parameters(), lr=lr)
     loss_fn = CrossEntropyLoss()
     
-    print("Loading data...")
-    data_loader = get_data_loader(split=split)
-    print(f"Data loaded successfully. Starting training with {len(data_loader)} batches per epoch...")
+    # Use custom data loader
+    data_loader = get_data_loader_custom(split=split)
 
     for epoch in range(epochs):
-        print(f"\nStarting epoch {epoch+1}/{epochs}...")
         total_loss = 0
         batch_count = 0
         for images, labels in data_loader:
@@ -41,46 +40,38 @@ def train_model(epochs=10, lr=1e-3, split="balanced", device="mps"):
             total_loss += loss.item()
             batch_count += 1
             
-            # Print progress every 200 batches
-            if batch_count % 200 == 0:
-                print(f"  Batch {batch_count}/{len(data_loader)}, Current Loss: {loss.item():.4f}")
-        epoch_loss = total_loss/len(data_loader)
+            # Print progress every 100 batches
+            if batch_count % 100 == 0:
+                print(f"Epoch {epoch+1}/{epochs}, Batch {batch_count}, Loss: {loss.item():.4f}")
+        
+        epoch_loss = total_loss / len(data_loader)
         loss_history.append(epoch_loss)
-        print(f"Epoch {epoch+1}/{epochs} completed! Average Loss: {epoch_loss:.4f}")
+        print(f"Epoch {epoch+1}/{epochs} completed, Average Loss: {epoch_loss:.4f}")
 
-    # Save model with split info in filename
+    # Save model with split name
     model_filename = f'model_state_emnist_{split}.pt'
-    save_dict = {
-        'model_state_dict': model.state_dict(),
-        'num_classes': num_classes,
-        'split': split
-    }
     with open(model_filename, 'wb') as f: 
-        save(save_dict, f)
+        save(model.state_dict(), f)
     print(f"Training complete! Model saved as '{model_filename}'.")
     
     # Plot loss curve
     plt.plot(range(1, epochs + 1), loss_history, marker='o')
-    plt.title(f"Training Loss - EMNIST {split}")
+    plt.title(f"EMNIST {split.title()} Training Loss")
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.grid()
-    plt.savefig(f"training_loss_curve_emnist_{split}.png")
+    plot_filename = f"training_loss_curve_emnist_{split}.png"
+    plt.savefig(plot_filename)
+    print(f"Loss curve saved as '{plot_filename}'")
     plt.show()
 
-
 if __name__ == "__main__":
+    # Parse command line arguments
+    epochs_count = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+    split = sys.argv[2] if len(sys.argv) > 2 else "letters"
+    
     # Device setup
     device = get_device()
-    
-    # Parse command line arguments
-    epochs_count = 10
-    split = "balanced"
-    
-    if len(sys.argv) > 1:
-        epochs_count = int(sys.argv[1])
-    if len(sys.argv) > 2:
-        split = sys.argv[2]
-    
     print(f"Using device: {device}")
-    train_model(epochs=epochs_count, split=split, device=device)
+    
+    train_model_custom(epochs=epochs_count, split=split, device=device)
