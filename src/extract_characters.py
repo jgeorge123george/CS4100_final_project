@@ -1,7 +1,12 @@
 import cv2
+import os
 
 IMAGE_PATH = "/Users/josephgeorge/cs4100/CS4100_final_project/hello.png"
 BOX_PATH = "/Users/josephgeorge/cs4100/CS4100_final_project/boxes.txt"
+OUTPUT_DIR = "/Users/josephgeorge/cs4100/CS4100_final_project/testerac_output"
+
+# Create the output folder if it doesn't exist
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Load the image
 img = cv2.imread(IMAGE_PATH)
@@ -37,6 +42,17 @@ for line in lines:
     boxes.append((char, crop))
 
 for i, (char, crop_img) in enumerate(boxes):
-    cv2.imwrite(f"char_{i}_{char}.png", crop_img)
 
-print(f"Saved {len(boxes)} raw cropped character images.")
+    # Draw white bounding box inside the crop
+    cv2.rectangle(
+        crop_img,
+        (0, 0),
+        (crop_img.shape[1] - 1, crop_img.shape[0] - 1),
+        (255, 255, 255),
+        2
+    )
+
+    # Save to your desired output folder
+    cv2.imwrite(f"{OUTPUT_DIR}/char_{i}.png", crop_img)
+
+print(f"Saved {len(boxes)} raw cropped character images to {OUTPUT_DIR}.")
