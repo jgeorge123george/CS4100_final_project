@@ -17,10 +17,15 @@ def train_model(epochs=10, lr=1e-3, split="balanced", device="mps"):
     model = ImageClassifier(num_classes=num_classes).to(device)
     optimizer = Adam(model.parameters(), lr=lr)
     loss_fn = CrossEntropyLoss()
+    
+    print("Loading data...")
     data_loader = get_data_loader(split=split)
+    print(f"Data loaded successfully. Starting training with {len(data_loader)} batches per epoch...")
 
     for epoch in range(epochs):
+        print(f"\nStarting epoch {epoch+1}/{epochs}...")
         total_loss = 0
+        batch_count = 0
         for images, labels in data_loader:
             images, labels = images.to(device), labels.to(device)
             
@@ -34,9 +39,14 @@ def train_model(epochs=10, lr=1e-3, split="balanced", device="mps"):
             optimizer.step()
             
             total_loss += loss.item()
+            batch_count += 1
+            
+            # Print progress every 200 batches
+            if batch_count % 200 == 0:
+                print(f"  Batch {batch_count}/{len(data_loader)}, Current Loss: {loss.item():.4f}")
         epoch_loss = total_loss/len(data_loader)
         loss_history.append(epoch_loss)
-        print(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss:.4f}")
+        print(f"Epoch {epoch+1}/{epochs} completed! Average Loss: {epoch_loss:.4f}")
 
     # Save model with split info in filename
     model_filename = f'model_state_emnist_{split}.pt'

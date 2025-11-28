@@ -10,7 +10,6 @@ if img is None:
 
 h, w, _ = img.shape
 
-# Read box lines
 boxes = []
 with open(BOX_PATH, "r") as f:
     lines = f.readlines()
@@ -18,32 +17,26 @@ with open(BOX_PATH, "r") as f:
 for line in lines:
     parts = line.strip().split()
 
-    # Expect: char x0 y0 x1 y1 page
     if len(parts) < 5:
         continue
 
     char = parts[0]
     x0, y0, x1, y1 = map(int, parts[1:5])
 
-    # Tesseract uses bottom-left origin → flip the y-axis for OpenCV
-    y0 = h - y0
-    y1 = h - y1
-    y_top = min(y0, y1)
-    y_bottom = max(y0, y1)
+    y0_fixed = h - y0
+    y1_fixed = h - y1
+
+    y_top = min(y0_fixed, y1_fixed)
+    y_bottom = max(y0_fixed, y1_fixed)
 
     crop = img[y_top:y_bottom, x0:x1]
 
     if crop.size == 0:
         continue
 
-    # Convert to grayscale and resize to 28×28 for the CNN
-    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-    char28 = cv2.resize(gray, (28, 28))
+    boxes.append((char, crop))
 
-    boxes.append((char, char28))
+for i, (char, crop_img) in enumerate(boxes):
+    cv2.imwrite(f"char_{i}_{char}.png", crop_img)
 
-# Save cropped 28×28 character images
-for i, (char, char_img) in enumerate(boxes):
-    cv2.imwrite(f"char_{i}_{char}.png", char_img)
-
-print(f"Saved {len(boxes)} character images.")
+print(f"Saved {len(boxes)} raw cropped character images.")
