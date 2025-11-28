@@ -23,3 +23,7 @@ project/
 #data files
 data/
 checkpoints/
+
+# cache files
+__pycache__/
+*.pyc
