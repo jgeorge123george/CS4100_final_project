@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 from PIL import Image, ImageOps
 import torch
 from torchvision.transforms import ToTensor
@@ -66,10 +67,26 @@ def predict_image(image_path, model_path=None, split="balanced", device="mps"):
     model.load_state_dict(state_dict)
     model.eval()
 
-    # Process image
-    with ImageOps.invert(Image.open(image_path).convert('L')) as img:
+    # Process image with EMNIST-compatible preprocessing when appropriate.
+    # EMNIST images are stored transposed relative to MNIST.
+    with Image.open(image_path).convert('L') as raw_img:
+        img = ImageOps.invert(raw_img)
         img = img.resize((28, 28))
+        arr = np.array(img)
+        # If the model was trained on pure MNIST, don't transpose; otherwise transpose for EMNIST
+        if "mnist" in saved_split or "mnist" in saved_split.lower():
+            proc = arr
+        else:
+            proc = arr.T
+        img = Image.fromarray(proc)
         img_tensor = ToTensor()(img).unsqueeze(0).to(device)
+
+
+    # #process the image WITHOUT transposing correctly
+    # with ImageOps.invert(Image.open(image_path).convert('L')) as img:
+    #     img = img.resize((28, 28))
+    #     img_tensor = ToTensor()(img).unsqueeze(0).to(device)
+
 
     # Get prediction
     with torch.no_grad():
