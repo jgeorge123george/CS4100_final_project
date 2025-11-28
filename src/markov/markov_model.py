@@ -233,43 +233,6 @@ def load_text(filepath, encoding='utf-8', normalize_whitespace=False):
     return text
 
 
-def interactive_mode(model):
-    """Run interactive text generation mode"""
-    print("\n=== Interactive Mode ===")
-    print("Commands: 'quit' to exit, 'temp <value>' to set temperature")
-    print(f"Current settings: order={model.order}, temperature=1.0")
-    
-    temperature = 1.0
-    
-    while True:
-        user_input = input("\nEnter seed text (or command): ").strip()
-        
-        if user_input.lower() == 'quit':
-            break
-        elif user_input.lower().startswith('temp '):
-            try:
-                temperature = float(user_input.split()[1])
-                print(f"Temperature set to {temperature}")
-            except:
-                print("Invalid temperature value")
-            continue
-        
-        # Generate text
-        if len(user_input) < model.order:
-            print(f"Seed text too short. Need at least {model.order} characters.")
-            user_input = None
-        
-        try:
-            generated = model.generate_text(
-                length=200,
-                seed_text=user_input if user_input else None,
-                temperature=temperature
-            )
-            print(f"\nGenerated text:\n{generated}")
-        except Exception as e:
-            print(f"Error: {e}")
-
-
 def main():
     parser = argparse.ArgumentParser(description='Character-level Markov Model for Text Generation')
     parser.add_argument('--train', type=str, help='Path to training text file')
@@ -279,7 +242,6 @@ def main():
     parser.add_argument('--temperature', type=float, default=1.0, help='Generation temperature (default: 1.0)')
     parser.add_argument('--save', type=str, help='Save trained model to file')
     parser.add_argument('--load', type=str, help='Load model from file')
-    parser.add_argument('--interactive', action='store_true', help='Run interactive mode')
     parser.add_argument('--evaluate', type=str, help='Evaluate model on test file')
     
     args = parser.parse_args()
@@ -332,13 +294,6 @@ def main():
             )
             print(f"\nGenerated text:\n{generated}")
     
-    # Run interactive mode if requested
-    if args.interactive:
-        if len(model.states) == 0:
-            print("Error: No model loaded or trained")
-        else:
-            interactive_mode(model)
-
 
 if __name__ == "__main__":
     main()
