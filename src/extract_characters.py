@@ -56,3 +56,4 @@ for i, (char, crop_img) in enumerate(boxes):
     cv2.imwrite(f"{OUTPUT_DIR}/char_{i}.png", crop_img)
 
 print(f"Saved {len(boxes)} raw cropped character images to {OUTPUT_DIR}.")
+
