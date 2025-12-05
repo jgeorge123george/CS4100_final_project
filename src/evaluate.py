@@ -26,6 +26,16 @@ def get_emnist_mapping(split="balanced"):
         mapping.extend([chr(i) for i in range(65, 91)])
         mapping.extend(['a', 'b', 'd', 'e', 'f', 'g', 'h', 'n', 'q', 'r', 't'])
         return mapping[:47]
+    elif split == "byclass":
+        # EMNIST byclass has 62 classes (0-9, A-Z, a-z)
+        mapping = []
+        # 0-9: digits
+        mapping.extend([str(i) for i in range(10)])
+        # 10-35: uppercase A-Z
+        mapping.extend([chr(i) for i in range(65, 91)])
+        # 36-61: lowercase a-z
+        mapping.extend([chr(i) for i in range(97, 123)])
+        return mapping[:62]
     elif split == "digits":
         return list(range(10))
     elif split == "letters":

@@ -1,4 +1,5 @@
 import sys
+import os
 from torch import save
 from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
@@ -7,8 +8,12 @@ from data_loader import get_data_loader, get_num_classes
 from utils import get_device
 import matplotlib.pyplot as plt
 
-def train_model(epochs=10, lr=1e-3, split="balanced", device="mps"):
+def train_model(epochs=10, lr=1e-3, split="byclass", device="mps"):
     loss_history = []
+    
+    # Create checkpoints folder if it doesn't exist
+    checkpoint_dir = "checkpoints"
+    os.makedirs(checkpoint_dir, exist_ok=True)
     
     # Get number of classes for the chosen split
     num_classes = get_num_classes(split)
@@ -47,16 +52,28 @@ def train_model(epochs=10, lr=1e-3, split="balanced", device="mps"):
         epoch_loss = total_loss/len(data_loader)
         loss_history.append(epoch_loss)
         print(f"Epoch {epoch+1}/{epochs} completed! Average Loss: {epoch_loss:.4f}")
+        
+        # Save checkpoint after each epoch
+        checkpoint_path = os.path.join(checkpoint_dir, f'checkpoint_emnist_{split}_epoch_{epoch+1}.pt')
+        checkpoint = {
+            'epoch': epoch + 1,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'num_classes': num_classes,
+            'split': split,
+            'loss': epoch_loss
+        }
+        save(checkpoint, checkpoint_path)
+        print(f"Checkpoint saved to '{checkpoint_path}'")
 
-    # Save model with split info in filename
+    # Save final model
     model_filename = f'model_state_emnist_{split}.pt'
     save_dict = {
         'model_state_dict': model.state_dict(),
         'num_classes': num_classes,
         'split': split
     }
-    with open(model_filename, 'wb') as f: 
-        save(save_dict, f)
+    save(save_dict, model_filename)
     print(f"Training complete! Model saved as '{model_filename}'.")
     
     # Plot loss curve
