@@ -5,13 +5,13 @@ from data_loader import get_test_loader, get_num_classes
 from utils import get_device
 import sys
 
-def evaluate_model(model_path=None, split="balanced", batch_size=32):
+def evaluate_model(model_path=None, split="byclass", batch_size=32):
     device = get_device()
     print(f"Using device: {device}")
     
     # Default model path based on split
     if model_path is None:
-        model_path = f"model_state_emnist_{split}.pt"
+        model_path = f"src/model_{split}.pt"
     
     # Load test data
     test_loader = get_test_loader(batch_size=batch_size, split=split)

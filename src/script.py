@@ -23,7 +23,7 @@ class ImageClassifier(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-def get_feature_progression_array(image_path, model_path="src/model_state_emnist_balanced.pt"):
+def get_feature_progression_array(image_path, model_path="src/model_balanced.pt"):
     """
     Get an array of feature map images showing CNN progression.
     
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         print("Example: python script.py testerac_output/char_0.png")
     else:
         image_path = sys.argv[1]
-        model_path = sys.argv[2] if len(sys.argv) > 2 else "src/model_state_emnist_balanced.pt"
+        model_path = sys.argv[2] if len(sys.argv) > 2 else "src/model_balanced.pt"
         
         # Get the array of images
         feature_array = get_feature_progression_array(image_path, model_path)

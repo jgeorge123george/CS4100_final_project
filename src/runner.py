@@ -36,31 +36,118 @@ def extract_characters_from_images(image_folder="testerac_output", split="full")
     print(f"Found {len(image_files)} images to process")
     
     characters = []
+    first_char_is_letter = None  # Will be determined from first prediction
     
     for i, image_path in enumerate(image_files):
         print(f"Processing {os.path.basename(image_path)} ({i+1}/{len(image_files)})...", end=" ")
         
         try:
-            # Run evaluate.py with --nogui flag to get just the character
-            result = subprocess.run(
-                [sys.executable, "src/evaluate.py", image_path, split, "--nogui"],
-                capture_output=True,
-                text=True,
-                cwd=os.getcwd()
-            )
-            
-            if result.returncode == 0:
-                # Get the predicted character (last line of output, stripped)
-                predicted_char = result.stdout.strip().split('\n')[-1]
-                characters.append(predicted_char)
-                print(f"→ '{predicted_char}'")
+            # For first character, get top predictions to check if we should prioritize letters
+            if i == 0:
+                result = subprocess.run(
+                    [sys.executable, "src/evaluate.py", image_path, split, "--nogui", "--top-predictions"],
+                    capture_output=True,
+                    text=True,
+                    cwd=os.getcwd()
+                )
+                
+                if result.returncode == 0:
+                    output_lines = result.stdout.strip().split('\n')
+                    # Parse top predictions (format: char:probability)
+                    predictions = []
+                    for line in output_lines:
+                        if ':' in line:
+                            char, prob = line.split(':', 1)
+                            predictions.append((char, float(prob)))
+                    
+                    if predictions:
+                        # Get the top prediction
+                        top_char = predictions[0][0]
+                        
+                        # If top prediction is a letter, use it and set flag
+                        if top_char.isalpha():
+                            predicted_char = top_char
+                            first_char_is_letter = True
+                        else:
+                            # Look for highest probability letter
+                            best_letter = None
+                            best_letter_prob = 0
+                            for char, prob in predictions:
+                                if char.isalpha() and prob > best_letter_prob:
+                                    best_letter = char
+                                    best_letter_prob = prob
+                            
+                            if best_letter:
+                                predicted_char = best_letter
+                                first_char_is_letter = True
+                            else:
+                                predicted_char = top_char
+                                first_char_is_letter = False
+                    else:
+                        predicted_char = "?"
+                        first_char_is_letter = False
+                else:
+                    print(f"Error: {result.stderr.strip()}")
+                    predicted_char = "?"
+                    first_char_is_letter = False
             else:
-                print(f"Error: {result.stderr.strip()}")
-                characters.append("?")  # Placeholder for failed predictions
+                # For subsequent characters, use letter priority if first char was a letter
+                if first_char_is_letter:
+                    result = subprocess.run(
+                        [sys.executable, "src/evaluate.py", image_path, split, "--nogui", "--top-predictions"],
+                        capture_output=True,
+                        text=True,
+                        cwd=os.getcwd()
+                    )
+                    
+                    if result.returncode == 0:
+                        output_lines = result.stdout.strip().split('\n')
+                        # Parse top predictions
+                        predictions = []
+                        for line in output_lines:
+                            if ':' in line:
+                                char, prob = line.split(':', 1)
+                                predictions.append((char, float(prob)))
+                        
+                        if predictions:
+                            # Look for highest probability letter first
+                            best_letter = None
+                            best_letter_prob = 0
+                            for char, prob in predictions:
+                                if char.isalpha() and prob > best_letter_prob:
+                                    best_letter = char
+                                    best_letter_prob = prob
+                            
+                            # Use letter if found, otherwise use top prediction
+                            predicted_char = best_letter if best_letter else predictions[0][0]
+                        else:
+                            predicted_char = "?"
+                    else:
+                        print(f"Error: {result.stderr.strip()}")
+                        predicted_char = "?"
+                else:
+                    # Normal prediction without letter priority
+                    result = subprocess.run(
+                        [sys.executable, "src/evaluate.py", image_path, split, "--nogui"],
+                        capture_output=True,
+                        text=True,
+                        cwd=os.getcwd()
+                    )
+                    
+                    if result.returncode == 0:
+                        predicted_char = result.stdout.strip().split('\n')[-1]
+                    else:
+                        print(f"Error: {result.stderr.strip()}")
+                        predicted_char = "?"
+            
+            characters.append(predicted_char)
+            print(f"→ '{predicted_char}'")
                 
         except Exception as e:
             print(f"Exception: {e}")
             characters.append("?")
+            if i == 0:
+                first_char_is_letter = False
     
     return characters
 
@@ -138,8 +225,8 @@ def main():
     parser = argparse.ArgumentParser(description='Extract characters and generate text')
     parser.add_argument('--image-folder', default='testerac_output',
                       help='Folder containing character images (default: testerac_output)')
-    parser.add_argument('--split', default='full',
-                      help='EMNIST split to use (default: full)')
+    parser.add_argument('--split', default='byclass',
+                      help='EMNIST split to use (default: byclass)')
     parser.add_argument('--markov-model', 
                       help='Path to Markov model (if not specified, searches for one)')
     parser.add_argument('--length', type=int, default=200,

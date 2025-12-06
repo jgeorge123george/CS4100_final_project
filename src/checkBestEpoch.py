@@ -89,4 +89,3 @@ if results:
     plt.savefig('training_results.png', dpi=300, bbox_inches='tight')
     print("Graph saved as 'training_results.png'")
     plt.show()
-

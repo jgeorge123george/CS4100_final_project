@@ -43,11 +43,12 @@ def get_emnist_mapping(split="balanced"):
     else:
         return list(range(get_num_classes(split)))
 
-def predict_image(image_path, model_path=None, split="balanced", device="mps", show_gui=True):
+def predict_image(image_path, model_path=None, split="balanced", device="mps", show_gui=True, top_predictions=False):
     """
     Predict the character for image_path using the model.
     If show_gui is False, plotting and extra prints are suppressed and the function
     returns the predicted character string (and prints only that when called from CLI).
+    If top_predictions is True, outputs top 5 predictions with probabilities.
     """
     verbose = show_gui
 
@@ -83,7 +84,7 @@ def predict_image(image_path, model_path=None, split="balanced", device="mps", s
             img = square_img
         img = img.resize((28, 28))
         arr = np.array(img)
-        if "mnist" in saved_split or "mnist" in saved_split.lower():
+        if "mnist" in saved_split.lower():
             proc = arr
         else:
             proc = arr.T
@@ -127,23 +128,35 @@ def predict_image(image_path, model_path=None, split="balanced", device="mps", s
 
         print(f"Predicted: {predicted_char} (index: {predicted_index}, confidence: {confidence:.2f}%)")
     else:
-        # When GUI disabled, only output the predicted character (and return it).
-        print(predicted_char)
+        # When GUI disabled, output based on mode
+        if top_predictions:
+            # Output top 5 predictions with probabilities
+            top5_probs, top5_indices = torch.topk(probabilities[0], min(5, num_classes))
+            for i, (prob, idx) in enumerate(zip(top5_probs, top5_indices)):
+                if idx < len(mapping):
+                    char = str(mapping[idx])
+                else:
+                    char = str(idx.item())
+                print(f"{char}:{prob.item():.4f}")
+        else:
+            # Only output the predicted character
+            print(predicted_char)
         return predicted_char
 
     return predicted_char
 
 if __name__ == "__main__":
-    # Accept a --nogui or --no-gui flag anywhere in the args to disable plotting and extra prints.
+    # Accept flags anywhere in the args
     args = sys.argv[1:]
     if not args:
-        print("Usage: python evaluate.py <image_path> [split] [model_path] [--nogui]")
-        print("Example: python evaluate.py image.png balanced --nogui")
+        print("Usage: python evaluate.py <image_path> [split] [model_path] [--nogui] [--top-predictions]")
+        print("Example: python evaluate.py image.png balanced --nogui --top-predictions")
         sys.exit(1)
 
     nogui = any(a in ("--nogui", "--no-gui") for a in args)
+    top_predictions = any(a in ("--top-predictions", "--top") for a in args)
     # remove the flag tokens so positional args remain consistent
-    args = [a for a in args if a not in ("--nogui", "--no-gui")]
+    args = [a for a in args if a not in ("--nogui", "--no-gui", "--top-predictions", "--top")]
 
     image_path = args[0]
     split = args[1] if len(args) > 1 else "balanced"
@@ -154,4 +167,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     device = get_device()
-    predict_image(image_path, model_path, split, device, show_gui=not nogui)
+    predict_image(image_path, model_path, split, device, show_gui=not nogui, top_predictions=top_predictions)
