@@ -52,7 +52,7 @@ def predict_image(image_path, model_path=None, split="balanced", device="mps", s
     verbose = show_gui
 
     if model_path is None:
-        model_path = f"src/model_state_emnist_{split}.pt"
+        model_path = f"src/model_{split}.pt"
 
     checkpoint = torch.load(model_path, map_location=device)
 
@@ -73,6 +73,14 @@ def predict_image(image_path, model_path=None, split="balanced", device="mps", s
 
     with Image.open(image_path).convert('L') as raw_img:
         img = ImageOps.invert(raw_img)
+        # Make image square by adding black padding to shorter sides
+        width, height = img.size
+        if width != height:
+            size = max(width, height)
+            square_img = Image.new('L', (size, size), 0)
+            offset = ((size - width) // 2, (size - height) // 2)
+            square_img.paste(img, offset)
+            img = square_img
         img = img.resize((28, 28))
         arr = np.array(img)
         if "mnist" in saved_split or "mnist" in saved_split.lower():
