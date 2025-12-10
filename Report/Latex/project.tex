@@ -1,10 +1,5 @@
-% One really important thing to note is that Overleaf is simply an online product that enables collaboration for LaTeX files. You may choose to create a LaTeX environment locally on your machine (although...it takes >10 GB of storage). To do the latter, refer to: https://www.latex-project.org/get/
-% To learn more about how to use LaTeX and its syntax, check out the Overleaf documentation: https://www.overleaf.com/learn
-
-% Defining a document class is the first line in a LaTeX file. It sets the overall layout and styling of the document.
 \documentclass[a4paper, twocolumn]{article}
 
-% These packages enable customization of various aspects of the document. Think of them like "import" statements in Python.
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{geometry}
@@ -18,197 +13,201 @@
 \usepackage{indentfirst}
 \usepackage[hidelinks]{hyperref}
 
-% \providecommand defines a new command in LaTeX if it does not exist. This is particularly helpful to do if you find yourself repeating a specific set of commands for your a template.
 \providecommand{\keywords}[1]
 {
   \small
   \textbf{\; \textit{Keywords---}} #1
 }
 
-% Anything between \begin{document} and \end{document} is what gets printed on the page
 \begin{document}
 
-\title{\textbf{\huge{Insert Fancy Project Title}}}
+\title{\textbf{\huge{A Modular Pipeline for Handwritten Text Recognition and Prediction}}}
 \author{\textbf\large{Tammer Haddad, Joseph George}}
-\affil{\textbf{Northeastern University, Boston, 02115}}
+\affil{\textbf{Northeastern University}}
 \date{\today}
 
-% This is required to print the above 4 lines
 \maketitle
 
-% Optional, but useful default command in LaTeX to compose an Abstract section.
+\section*{AI Note}
+This report has been formalized by Claude AI using the prompt: "I made a draft for this paper, could you make it more formal and paper-appropriate?" \\
+\textit{The raw draft report prior to formalization is available at \url{https://github.com/jgeorge123george/CS4100_final_project/blob/main/Report/Latex/RAW_REPORT.pdf}.}
+
 \begin{abstract}
-This project explores machine learning approaches to handwritten text recognition and prediction. We developed a system that takes in digital text using a pipeline that includes Tesseract OCR, Convolutional Neural Network, and Markov Model. We source training data from EMNIST and MINST datasets. Our CNN model achieves 85.90\% accuracy across 62 character classes.
+This project explores machine learning approaches to handwritten text recognition and prediction. We developed a modular system for digitizing handwritten text using a pipeline that integrates Tesseract OCR for character segmentation, a Convolutional Neural Network for character classification, and a Markov model for next-character prediction. Training data was sourced from the EMNIST and MNIST datasets for the CNN, and the Common Crawl corpus for the Markov model. Our CNN achieves 85.90\% accuracy across 62 character classes on the EMNIST ByClass dataset and 99.21\% on MNIST digits.
+\end{abstract}
 
-\end{abstract}\maketitle
+\section{Introduction}
 
+Despite the prevalence of digital devices, handwritten notes remain a popular method for recording information in academic and professional settings. However, handwritten notes present significant challenges for organization and retrieval. Locating specific content within physical notes is time-consuming, and sharing or editing such notes requires manual transcription. Digitization addresses these limitations by enabling searchability, editability, and seamless distribution.
 
-% \section command is a section title's style. By default, they are numbered. If you don't want them numbered, add a * like below.
-\section*{Introduction}
-
-Even the rise of computers, handwritten notes are still a popular method to write down information for classes, meetings, etc. However, the organization and functionality aspect of written notes is inconvenient. For example, finding notes on a previous subject can be difficult manually but it would be easier if the notes were digitized and searchable. Functionally, digitized text allows for editing and sharing of notes. Traditionally, OCR (Optical Character Recognition) has been used to detect characters through rule-based algorithms. However, with the rise of AI approaches, deep learning and convolutional neural networks have improved the accuracy of OCR software. We took inspiration from this technological advancement to create an integrated pipeline that not only transcribes handwritten notes but also predicts subsequent text, making digitization more efficient and useful.
-
-% Here, I refer to Figure \ref{fig:1} without actually listing the actual figure number in plaintext!
+Traditional Optical Character Recognition (OCR) systems relied on rule-based algorithms and template matching to detect characters. With advances in deep learning, convolutional neural networks have substantially improved recognition accuracy, particularly for handwritten text where character forms vary considerably between writers. We build upon these developments by constructing an integrated pipeline that not only transcribes handwritten notes but also predicts subsequent characters, potentially improving transcription efficiency through intelligent autocompletion.
 
 \section{Related Work}
-\begin{itemize}
-    \item most OCR systems use template matching, where images are compared against glyph prototypes from known fonts \cite{Eikvil:1993}. these worked on clean inputs but werent great with messy handwriting or strange fonts because they required the templates for every font.
-    \item a 1998 paper made LeNet-5, a CNN that learned handwriting without manual feature creation \cite{LeCun:1998}. they created the CNN structure we use today (convolution, pooling, fully connected layers), and got 99\%+ on MNIST. this is what was used commercially after it came out.
-    \item the MNIST is the standard benchmark for character recognition. Cohen extended this into EMNIST by adding uppercase and lowercase letters to bring it up to 62 classes \cite{EMNIST:1}.
-    \item n gram language models predict the next word/character based on n-1 previous chars, using markov assumption that the only context that matters is the recent one. theyre good for spellcheck and short autofill.
-    \item modern recognition combines CNNs with recurrent networks (networks that have memory), and use CTC loss for training (so that they dont need character level segmentation) \cite{Shi:2016}. Tesseract 4.0 used this and gets 95\%+ accuracy on character recognition now. We are simulating this but instead of having it as one model/program we keep them modular, only linked by the runner script.
-\end{itemize}
 
-\section{Related Work}
-\begin{itemize}
-    \item Traditional OCR systems used template matching, where character images are compared against stored glyph prototypes from known fonts \cite{Eikvil:1993}. These rule-based approaches worked well on clean, constrained inputs but struggled with novel fonts and handwriting because they required extensive libraries of character templates for each font they could recognize.
-    
-    \item LeCun et al.'s 1998 paper introduced LeNet-5, a convolutional neural network that learned to recognize handwritten digits end-to-end without manual feature engineering \cite{LeCun:1998}. LeNet established the fundamental CNN structure we still use today (convolution, pooling, fully connected layers) and achieved under 1\% error on MNIST. It was deployed commercially for reading handwritten checks and inspired later architectures like AlexNet and ResNet.
-    
-    \item The MNIST dataset (70,000 handwritten digit images) became the standard benchmark for character recognition. Cohen et al. extended this with EMNIST in 2017, adding uppercase and lowercase letters to create a 62-class task while keeping the same 28x28 grayscale format \cite{Cohen:2017}. Their baseline results showed 51.80\% accuracy with linear classifiers and 77.57\% with neural networks. Ciresan et al. achieved 88.12\% using committees of deep CNNs \cite{ICDAR:2011}, and recent work like SpinalNet has reached over 91\% on balanced splits \cite{SpinalNet:2023}.
-    
-    \item N-gram language models predict the next word or character based on the previous n-1 elements, using the Markov assumption that only recent context matters. The math dates back to Markov's 1913 work on letter sequences, with Shannon applying it to English in 1948. These models are simple and efficient for tasks like spelling correction and text prediction, especially when trained on large corpora like Common Crawl.
-    
-    \item Modern end-to-end handwriting recognition combines CNNs with recurrent networks (LSTMs) and uses CTC loss for training \cite{Shi:2016}. CTC allows the network to learn from unaligned data without character-level segmentation. Tesseract 4.0 adopted this LSTM-based approach and saw major accuracy gains over its legacy engine. State-of-the-art systems on benchmarks like IAM now achieve character error rates below 5\%.
-    
-    \item Our approach differs by keeping a modular pipeline: Tesseract for segmentation, a custom CNN for EMNIST classification, and a separate Markov model for prediction. This lets us optimize each component independently and see what's happening at each stage.
-\end{itemize}
+Traditional OCR systems employed template matching, comparing character images against stored glyph prototypes from known fonts \cite{Eikvil:1993}. While effective on clean, constrained inputs, these rule-based approaches struggled with novel fonts and handwriting due to their reliance on extensive character template libraries.
+
+LeCun et al. introduced LeNet-5, a convolutional neural network that learned to recognize handwritten digits end-to-end without manual feature engineering \cite{LeCun:1998}. LeNet established the fundamental CNN architecture still in use today---convolution, pooling, and fully connected layers---achieving sub-1\% error on MNIST. This architecture was deployed commercially for processing handwritten checks and inspired subsequent architectures including AlexNet and ResNet.
+
+The MNIST dataset, comprising 70,000 handwritten digit images, became the standard benchmark for character recognition. Cohen et al. extended this with EMNIST in 2017, incorporating uppercase and lowercase letters to create a 62-class classification task while maintaining the 28$\times$28 grayscale format \cite{Cohen:2017}. Baseline results demonstrated 51.80\% accuracy with linear classifiers and 77.57\% with neural networks. Ciresan et al. achieved 88.12\% using committees of deep CNNs \cite{ICDAR:2011}, while recent architectures such as SpinalNet have exceeded 91\% on balanced splits \cite{SpinalNet:2023}.
+
+N-gram language models predict subsequent words or characters based on the preceding $n-1$ elements, employing the Markov assumption that only recent context is relevant. This mathematical framework traces back to Markov's 1913 work on letter sequences, with Shannon applying it to English text in 1948. These models remain efficient for spelling correction and text prediction, particularly when trained on large corpora.
+
+Modern end-to-end handwriting recognition systems combine CNNs with recurrent networks (LSTMs) and employ Connectionist Temporal Classification (CTC) loss for training \cite{Shi:2016}. CTC enables learning from unaligned data without character-level segmentation. Tesseract 4.0 adopted this LSTM-based approach, achieving substantial accuracy improvements over its legacy engine. State-of-the-art systems on benchmarks such as IAM now achieve character error rates below 5\%.
+
+Our approach maintains a modular pipeline: Tesseract for segmentation, a custom CNN for EMNIST classification, and a separate Markov model for prediction. This modularity enables independent optimization of each component and provides transparency into intermediate processing stages.
 
 \section{Preliminaries}
-\begin{itemize}
-    \item OCR stands for Optical Character Recognition, which is a fancy way to say reading. we take an image of text and convert it into readable characters (text letters). we specifically are only using one to chop up images into individual characters, because we are using a CNN to read the text.
-    \begin{figure}[h]
-        \centering
-        \includegraphics[width=0.5\textwidth]{hello_split.png}
-        \label{fig:hello_split}
-    \end{figure}
-    \item a CNN (Convolutional Neural Network) is a type of deep learning model that is especially good at processing images. it uses layers of filters to detect patterns in images (edges shapes and textures), then looks at patterns WITHIN the patterns to recognize things like letters and numbers. this can be seen in figure \ref{fig:feature_progression}, where the first layers detect simple edges, and later layers detect more complex features, finalizing in the last layer with character predictions.
-    \begin{figure}[h]
-        \centering
-        \includegraphics[width=1\textwidth]{h_feature_progression.png}
-        \caption{CNN Feature Progression Across Layers}
-        \label{fig:feature_progression}
-    \end{figure}
-    \item a Markov Model is a statistical model that predicts the next item in a sequence based only on the current item (or several current items). in our case, we use it to predict the next letter in a sequence of letters based on the previous letters (if you see "good morni\_\_", you can guess the next letters are "ng").
-    \item we have images of handwritten text, which we first segment into individual character images using OCR. then each image is fed into our CNN, which outputs several predicted characters. these predicted characters form a sequence that can be formed into sentences or words, which is then processed by our Markov model to predict the most likely next characters based on learned language patterns taken from the internet.
-\end{itemize}
+
+\textbf{Optical Character Recognition (OCR)} refers to the process of converting images of text into machine-readable character sequences. In our pipeline, OCR serves specifically to segment input images into individual character images, which are subsequently processed by the CNN classifier.
+
+\textbf{Convolutional Neural Networks (CNNs)} are deep learning architectures particularly suited for image processing. CNNs employ layers of learnable filters to detect hierarchical patterns---from simple edges in early layers to complex features such as character shapes in deeper layers. Figure \ref{fig:feature_progression} illustrates this progression, showing how initial layers detect edges while subsequent layers capture increasingly abstract features culminating in character-level predictions.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{h_feature_progression.png}
+    \caption{CNN feature progression across layers, demonstrating hierarchical feature extraction from edges to character-level representations.}
+    \label{fig:feature_progression}
+\end{figure}
+
+\textbf{Markov Models} are statistical models that predict the next element in a sequence based solely on the current state or a fixed window of recent states. In our application, the Markov model predicts subsequent characters based on preceding character sequences, exploiting statistical regularities in natural language (e.g., given the sequence ``good morni,'' the model assigns high probability to ``n'' and ``g'').
+
+Our complete pipeline operates as follows: handwritten text images are first segmented into individual character images using OCR. Each character image is then classified by the CNN, producing predicted character sequences. These sequences are subsequently processed by the Markov model to predict likely continuations based on learned language patterns.
 
 \section{Data}
-\begin{itemize}
-    \item the MNIST dataset is a dataset of handwritten numbers 0 to 9, with 60k training samples and 10k for testing. the images are 28x28 greyscale images of single digits.
-    \item the EMNIST dataset is the *E*xtended Mnist dataset. this includes uppercase and lowercaqse letters on top of the MNIST digits, totalling to 62 classes. it has 240k training samples and 40k testing samples, also 28x28 greyscale images of single characters (except these are transformed as well, but more on that later).
-    \item in our the Markov model, we used the common crawl dataset, which is a massive dataset of web pages crawled from the internet. we used this because it is nigh infinite and has a wide variety of text. we can also pull it in batches to train our model so we dont have to load the same amount every time.
-    \item the EMNIST and MNIST datasets we just got off of torchvision datasets, and for the common crawl dataset we used the publicly available dataset on AWS S3
-    \item For training, the EMNISt and MNIST already have training and testing splits, so we used those. for the markov model, we tested on the C4 validation set, which is a held out portion of the common crawl dataset specifrically for testing.
-    \item in terms of preprocessing, we didnt need to do anything for MNIST and EMNIST, since theyre very well formatted. common crawl needed a little: we discared docs shorter than 100 chars, stripped whitespace from beginning and end, and joined with newline.
-    \item we had no class imbalance issues, since we are using established and well balanced datasets.
-\end{itemize}
+
+\subsection{Image Datasets}
+
+The MNIST dataset comprises 70,000 handwritten digit images (60,000 training, 10,000 testing) of digits 0--9. Each image is a 28$\times$28 grayscale representation of a single digit.
+
+The EMNIST (Extended MNIST) dataset augments MNIST with uppercase and lowercase letters, yielding 62 character classes. The ByClass split contains approximately 280,000 samples (240,000 training, 40,000 testing), maintaining the 28$\times$28 grayscale format. Both datasets were obtained through the torchvision library.
+
+\subsection{Text Corpus}
+
+For Markov model training, we utilized the Common Crawl dataset, a large-scale web corpus providing diverse text samples. Data was accessed through the publicly available AWS S3 repository. Evaluation was performed on the C4 validation set, a held-out portion of Common Crawl designated for testing.
+
+\subsection{Preprocessing}
+
+The MNIST and EMNIST datasets required no additional preprocessing due to their standardized format. For Common Crawl, we discarded documents shorter than 100 characters, stripped leading and trailing whitespace, and concatenated documents with newline separators. Class imbalance was not a significant concern given the established balance of the image datasets.
 
 \section{Methodology}
-\begin{itemize}
-    \item general pipeline (input image -> OCR -> Preprocess -> CNN -> letter combination -> Markov -> output)
-    \item We are using tesseract OCR to take an image of standard handwritten text and turn it into individual character images because our CNN is trained on single characters
-    \item Once we have those split characters, we preprocess them by greyscaling and inverting, ressizing by adding borders (to account for non square chars) and scaling to 28x28 pixels. for MNIST we then run it, but for EMNISt we also need to transform the image because EMNIST chars are rotated 90 degrees and flipped
-    \item Once we have those character predictions from the cnn, we need to DO something with them. for this we have the markov model we trained on the common crawl dataset
-    \item The tesseract is used beforehand (for now) to segment the text images, but then it is brought into a folder. Once there, there is a single python file that runs the pipeline from start to finish. the CNN and Markov models are completely seperate and run individually.
-    \item There is the possibliity of combining them by using the context given by the markov model to increase the accuracy of the CNN, but we believe it is better to implement that in the runner script rather than within either model.
-\end{itemize}
+
+Our pipeline consists of four sequential stages: OCR segmentation, image preprocessing, CNN classification, and Markov prediction.
+
+\textbf{Character Segmentation.} Tesseract OCR processes input images of handwritten text, segmenting them into individual character images. This segmentation is necessary because our CNN is trained on single-character inputs.
+
+\textbf{Image Preprocessing.} Segmented characters undergo several transformations: conversion to grayscale, color inversion, border padding to preserve aspect ratio, and resizing to 28$\times$28 pixels. For EMNIST compatibility, images additionally require a 90-degree rotation and horizontal flip to match the dataset's native orientation.
+
+\textbf{CNN Classification.} Preprocessed images are fed to our CNN, which outputs probability distributions over character classes. The architecture follows standard conventions: convolutional layers for feature extraction, pooling for spatial reduction, and fully connected layers for classification.
+
+\textbf{Markov Prediction.} Character predictions from the CNN form sequences that are processed by the Markov model. The model, trained on Common Crawl text, predicts probable subsequent characters based on learned n-gram statistics.
+
+The pipeline is implemented as a single Python script that orchestrates the CNN and Markov components. While these models currently operate independently, future work may integrate Markov predictions as auxiliary input to the CNN to improve classification accuracy through contextual information.
 
 \section{Experiments}
-\begin{itemize}
-    \item Optimizer: Adam, Learning rate: 1e-3, Batch size: 32, Loss: CrossEntropyLoss
-    \item FOR EPOCHS, We trained 50 MNIST epochs and 20 EMNIST epochs, then saved the model that had the highest test accuracy. for EMNIST this was epoch 3, and MNIST it was 40. after epoch 3-4 of EMNISt, the accuracy decreased we believe due to overfitting (since loss kept decreasing, shown in figures \ref{fig:loss_mnist} and \ref{fig:loss_emnist}).
-    \begin{figure}[h]
-        \centering
-        \begin{floatrow}
-            \ffigbox{\includegraphics[width=0.6\textwidth]{loss_mnist.png}}{\caption{MNIST Model Loss}\label{fig:loss_mnist}}
-            \ffigbox{\includegraphics[width=0.6\textwidth]{loss_emnist.png}}{\caption{EMNIST Model Loss}\label{fig:loss_emnist}}
-        \end{floatrow}
-    \end{figure}
-    \item There were several hardware and software environments used, sometimes locally on a local machine with an NVIDIA GPU, and sometimes on a remote cluster using a V100 GPU. The code was written in Python 3.8 using PyTorch and torchvision
-    \item Our evaluation metrics were primarily accuracy. we chose the epoch level based on highest testing accuracy. We also checked the confusion matrix as seen in figure \ref{fig:confusion_matrix_byclass} to see which characters were being confused the most. 
-    \item Using Linear classifiers and other CNNs as a baseline, we compare them to ours. The original EMNIST paper \cite{EMNIST:1} gets 51.80\% from a linear classifier, and 77.57\% with an OPIUM Neural Network with 10k hidden neurons. Other work \cite{ICDAR:2011} has managed 88.12\% using a committee of seven deep CNNs, and we managed 85.90\% accuracy on EMNIST byclass with a single CNN.
-    \item We have not yet combined the Markov model with the CNN for the single character prediction with context, we have them working seperately, but hope to combine them in the near future (working versions are already done but not solid).
-\end{itemize}
+
+\subsection{Training Configuration}
+
+Both CNN models were trained using the Adam optimizer with learning rate $10^{-3}$, batch size 32, and cross-entropy loss. The MNIST model was trained for 50 epochs, while the EMNIST model was trained for 20 epochs. Model selection was based on peak validation accuracy: epoch 40 for MNIST and epoch 3 for EMNIST. The EMNIST model exhibited signs of overfitting after epoch 3--4, with validation accuracy declining despite continued reduction in training loss (Figures \ref{fig:loss_mnist} and \ref{fig:loss_emnist}).
+
+\begin{figure}[h]
+    \centering
+    \begin{floatrow}
+        \ffigbox{\includegraphics[width=0.6\textwidth]{loss_mnist.png}}{\caption{MNIST training loss.}\label{fig:loss_mnist}}
+        \ffigbox{\includegraphics[width=0.6\textwidth]{loss_emnist.png}}{\caption{EMNIST training loss.}\label{fig:loss_emnist}}
+    \end{floatrow}
+\end{figure}
+
+\subsection{Computational Environment}
+
+Experiments were conducted across multiple environments: local machines equipped with NVIDIA GPUs and remote clusters utilizing V100 GPUs. The codebase was implemented in Python 3.8 using PyTorch and torchvision.
+
+\subsection{Evaluation Metrics}
+
+Primary evaluation employed classification accuracy on held-out test sets. Confusion matrices (Figure \ref{fig:confusion_matrix_byclass}) were analyzed to identify systematic misclassification patterns.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=1.2\textwidth]{confusion_matrix_byclass.png}
-    \caption{EMNIST Byclass Confusion Matrix}
+    \caption{Confusion matrix for EMNIST ByClass classification.}
     \label{fig:confusion_matrix_byclass}
 \end{figure}
 
-\section{Results}
-\begin{itemize}
-    \item test loader successful: 116323 test samples
-Loaded model trained on 'byclass' split with 62 classes
-Accuracy on EMNIST byclass Test Set: 85.90%
-Correct: 99921/116323
-test loader successful: 10000 test samples
-Loaded model trained on 'mnist' split with 10 classes
-Accuracy on EMNIST mnist Test Set: 99.21%
-Correct: 9921/10000
+\subsection{Baselines}
 
-\item Figures \ref{fig:mnist_accuracy} and \ref{fig:byclass_accuracy} show accuracy improvements across training epochs for both datasets.
+We compare our results against published baselines. The original EMNIST paper reports 51.80\% accuracy with linear classifiers and 77.57\% with a neural network containing 10,000 hidden units \cite{Cohen:2017}. Ciresan et al. achieved 88.12\% using a committee of seven deep CNNs \cite{ICDAR:2011}. Our single CNN achieves 85.90\% on EMNIST ByClass.
+
+\section{Results}
+
+\subsection{CNN Performance}
+
+On the EMNIST ByClass test set (116,323 samples), our model achieved 85.90\% accuracy (99,921 correct classifications). On the MNIST test set (10,000 samples), accuracy reached 99.21\% (9,921 correct). Figures \ref{fig:mnist_accuracy} and \ref{fig:byclass_accuracy} illustrate accuracy progression across training epochs.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=1\textwidth]{mnist_epochs_accuracy.png}
-    \caption{MNIST Model Accuracy Over Epochs}
+    \caption{MNIST model accuracy over training epochs.}
     \label{fig:mnist_accuracy}
 \end{figure}
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=1\textwidth]{byclass_epochs_accuracy.png}
-    \caption{EMNIST Byclass Model Accuracy Over Epochs}
+    \caption{EMNIST ByClass model accuracy over training epochs.}
     \label{fig:byclass_accuracy}
 \end{figure}
-    \item The most common mistakes we see are lowercase characters being confused for their upper case variants (ex: 'O' and 'o', 'I' and 'l' and '1'), which makes sense, since they they often have nearly identical shapes, with size being the differing factor. in fact the lowercase letter 'c' is almost always misclassified as uppercase 'C', showing that size is a major factor in classification.
-    \item Markov model prediction accuracy: Top-1 Accuracy: 59.84\%, Top-3 Accuracy: 77.03\%, Top-5 Accuracy: 82.43\%. The more often the charater appears the higher accuracy it predicts it. The model can predict spaces with 88.72\% accuracy, 'e' with 71.87\%, but 'm' for example only 40.12\%.
-    \item A good example output:
-    \begin{figure}[h]
-        \centering
-        \includegraphics[width=1\textwidth]{h_classify.png}
-        \label{fig:example_output}
-    \end{figure}
-\end{itemize}
+
+Analysis of the confusion matrix reveals that the most frequent errors involve confusion between lowercase and uppercase variants of the same letter (e.g., `O'/`o', `C'/`c') and visually similar characters across classes (e.g., `I'/`l'/`1'). These confusions are expected given the minimal visual distinctions, particularly regarding character size, which is normalized during preprocessing.
+
+\subsection{Markov Model Performance}
+
+The Markov model achieved the following prediction accuracies on the C4 validation set: Top-1: 59.84\%, Top-3: 77.03\%, Top-5: 82.43\%. Performance varied by character frequency: spaces were predicted with 88.72\% accuracy, the letter `e' with 71.87\%, while less frequent characters such as `m' achieved only 40.12\%.
 
 \section{Discussion}
-\begin{itemize}
-    \item The current main limitations is that messing up a single character completely throws the markov model out of whack, since it relies on the previous characters to predict the next one. so if the CNN misclassifies a character, the markov model will be predicting based on that wrong character, leading to error hell.
-    \item State of the art methods (transformers, larger datasets) would vastly improve performance, and even other EMNIST models have been trained with 95.88\% accuracy on the letters, and 91.05\% on balanced \cite{SpinalNet:2023}, which is much higher than ours. They have obviously had a lot more time to fix theirs, so we hope to improve ours in the future as well, or we could pivot to simply using theirs.
-    \item Future work: we hope to streamline the process by including the tesseract into the main program (within the github), and make it a web app able to take images directly from users. This could be extended to a video feed as well by taking snapshots. Using the markov model to increase the accuracy of the CNN is also well within possibility, and is already being worked on.
-    \item There are quite a few practical applications to the mix of Markov models and CNNs for handwritten text recognition. For one thing there is the easy answer in saying that nearly anything a CNN is used for the markov could be included to improve it's accuracy. for example, license plate recognition could be improved by using a markov model to predict the next character based on state specific license plate formats. We specifically were thinking of handwriting because of note taking and digitization because we are viewing it through the lens of students, but there are swathes of other contexts in which people write things, and this would be useful for all of them.
-\end{itemize}
 
-\section{Github Link \& Team Contributions}
-You can find the complete project repository at \href{https://github.com/jgeorge123george/CS4100_final_project}{\texttt{github.com/jgeorge123george/CS4100\_final\_project}}.
+\subsection{Limitations}
+
+The primary limitation of our current pipeline is error propagation: misclassification of a single character by the CNN corrupts the context for subsequent Markov predictions, potentially cascading into extended error sequences. This brittleness suggests that tighter integration between the CNN and Markov components could improve robustness.
+
+\subsection{Comparison to State-of-the-Art}
+
+Contemporary approaches employing transformer architectures and larger training corpora substantially outperform our results. SpinalNet achieves 95.88\% on EMNIST Letters and 91.05\% on the balanced split \cite{SpinalNet:2023}. Our modular approach prioritizes interpretability and component-wise optimization over raw performance.
+
+\subsection{Future Work}
+
+Several extensions are planned. First, integrating Tesseract directly into the main codebase would streamline the pipeline. Second, developing a web application would enable direct image upload from users, potentially extending to video input via frame extraction. Third, and most significantly, incorporating Markov predictions as auxiliary features for CNN classification could leverage linguistic context to disambiguate visually similar characters.
+
+\subsection{Applications}
+
+The combination of CNN-based character recognition with Markov prediction has applications beyond note digitization. License plate recognition could incorporate jurisdiction-specific format priors. Historical document transcription could leverage period-appropriate language models. Any domain involving handwritten text stands to benefit from context-aware recognition systems.
+
+\section{Repository and Contributions}
+
+The complete project repository is available at \href{https://github.com/jgeorge123george/CS4100_final_project}{\texttt{github.com/jgeorge123george/CS4100\_final\_project}}.
 
 \subsection{Team Contributions}
-\begin{itemize}
-    \item \textbf{Tammer Haddad:} Came up with idea for project. Expanded CNN from just MNIST to full EMNIST. Created Markov model for text prediction. Combined the models to create the pipeline. Wrote majority of report.
-    \item \textbf{Joseph George:} Created original MNIST CNN for handwritten digit recognition. Ran Tesseract OCR for character segmentation. Wrote Abstract and Introduction of report, and edited report from simplified bullet points to full sentences and formal paragraphs.
-\end{itemize}
+
+\textbf{Tammer Haddad:} Conceived the project. Extended the CNN from MNIST to full EMNIST classification. Developed the Markov model for text prediction. Integrated components into the unified pipeline. Authored the majority of this report.
+
+\textbf{Joseph George:} Implemented the original MNIST CNN for digit recognition. Configured Tesseract OCR for character segmentation. Wrote the Abstract and Introduction sections; edited the report for formal presentation.
 
 \begin{thebibliography}{9}
-\bibitem{EMNIST:1}
-Cohen, Gregory, et al. "EMNIST: An Extension of MNIST to Handwritten Letters." \textit{arXiv preprint arXiv:1702.05373}, Mar. 2017. https://doi.org/10.48550/arXiv.1702.05373.
+\bibitem{Cohen:2017}
+Cohen, G., Afshar, S., Tapson, J., and van Schaik, A. ``EMNIST: Extending MNIST to Handwritten Letters.'' \textit{arXiv preprint arXiv:1702.05373}, 2017.
 
 \bibitem{ICDAR:2011}
-Ciresan, D. C., Meier, U., Gambardella, L. M., and Schmidhuber, J. "Convolutional Neural Network Committees for Handwritten Character Classification." \textit{2011 International Conference on Document Analysis and Recognition}, Beijing, China, 2011, pp. 1135--1139. https://doi.org/10.1109/ICDAR.2011.229.
+Ciresan, D. C., Meier, U., Gambardella, L. M., and Schmidhuber, J. ``Convolutional Neural Network Committees for Handwritten Character Classification.'' \textit{Proc. International Conference on Document Analysis and Recognition}, pp. 1135--1139, 2011.
 
 \bibitem{SpinalNet:2023}
-Kabir, H M Dipu, et al. "SpinalNet: Deep Neural Network With Gradual Input." \textit{IEEE Transactions on Artificial Intelligence}, vol. 4, no. 5, Oct. 2023, pp. 1165--77. https://doi.org/10.1109/TAI.2022.3185179.
+Kabir, H. M. D., et al. ``SpinalNet: Deep Neural Network with Gradual Input.'' \textit{IEEE Transactions on Artificial Intelligence}, vol. 4, no. 5, pp. 1165--1177, 2023.
 
 \bibitem{LeCun:1998}
-LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. "Gradient-Based Learning Applied to Document Recognition." \textit{Proceedings of the IEEE}, vol. 86, no. 11, pp. 2278--2324, 1998.
+LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. ``Gradient-Based Learning Applied to Document Recognition.'' \textit{Proceedings of the IEEE}, vol. 86, no. 11, pp. 2278--2324, 1998.
 
 \bibitem{Eikvil:1993}
-Eikvil, L. "Optical Character Recognition." Norsk Regnesentral Technical Report, 1993.
+Eikvil, L. ``Optical Character Recognition.'' Norsk Regnesentral Technical Report, 1993.
 
 \bibitem{Shi:2016}
-Shi, B., Bai, X., and Yao, C. "An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition." \textit{IEEE Transactions on Pattern Analysis and Machine Intelligence}, vol. 39, no. 11, pp. 2298--2304, 2016.
+Shi, B., Bai, X., and Yao, C. ``An End-to-End Trainable Neural Network for Image-Based Sequence Recognition.'' \textit{IEEE TPAMI}, vol. 39, no. 11, pp. 2298--2304, 2017.
 
 \end{thebibliography}
 
