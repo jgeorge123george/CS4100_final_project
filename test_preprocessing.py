@@ -15,7 +15,7 @@ def predict_image_corrected(image_path, model_path=None, split="balanced", devic
     
     # Default model path
     if model_path is None:
-        model_path = f"src/model_state_emnist_{split}.pt"
+        model_path = f"src/model_{split}.pt"
     
     # Load checkpoint
     checkpoint = torch.load(model_path, map_location=device)

@@ -19,7 +19,7 @@ def get_device(prefer="mps"):
         return torch.device("cuda")
     return torch.device("cpu")
 
-def get_emnist_mapping(split="balanced"):
+def get_emnist_mapping(split="byclass"):
     """Get character mapping for EMNIST splits."""
     if split == "balanced":
         mapping = list(range(10))
@@ -43,7 +43,7 @@ def get_emnist_mapping(split="balanced"):
     else:
         return list(range(get_num_classes(split)))
 
-def predict_image(image_path, model_path=None, split="balanced", device="mps", show_gui=True, top_predictions=False):
+def predict_image(image_path, model_path=None, split="byclass", device="mps", show_gui=True, top_predictions=False):
     """
     Predict the character for image_path using the model.
     If show_gui is False, plotting and extra prints are suppressed and the function
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     args = [a for a in args if a not in ("--nogui", "--no-gui", "--top-predictions", "--top")]
 
     image_path = args[0]
-    split = args[1] if len(args) > 1 else "balanced"
+    split = args[1] if len(args) > 1 else "byclass"
     model_path = args[2] if len(args) > 2 else None
 
     if not os.path.exists(image_path):
