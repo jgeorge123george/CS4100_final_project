@@ -231,8 +231,8 @@ def main():
                       help='Path to Markov model (if not specified, searches for one)')
     parser.add_argument('--length', type=int, default=200,
                       help='Length of text to generate (default: 200)')
-    parser.add_argument('--save-chars', 
-                      help='Save extracted characters to file')
+    parser.add_argument('--save-chars', default=False, 
+                      help='Save extracted characters to file, false by default')
     parser.add_argument('--load-chars',
                       help='Load characters from file instead of processing images')
     
