@@ -21,7 +21,7 @@
 % \providecommand defines a new command in LaTeX if it does not exist. This is particularly helpful to do if you find yourself repeating a specific set of commands for your a template.
 \providecommand{\keywords}[1]
 {
-  \small	
+  \small
   \textbf{\; \textit{Keywords---}} #1
 }
 
@@ -38,7 +38,7 @@
 
 % Optional, but useful default command in LaTeX to compose an Abstract section.
 \begin{abstract}
-This project explores machine learning approaches to handwritten text recognition and prediction. We developed a system that takes in digital text using a pipeline that includes Tesseract OCR, Convolutional Neural Network, and Markov Model. We source training data from EMNIST and MINST datasets. Our CNN model achieves 83.27\% accuracy across 62 character classes.
+This project explores machine learning approaches to handwritten text recognition and prediction. We developed a system that takes in digital text using a pipeline that includes Tesseract OCR, Convolutional Neural Network, and Markov Model. We source training data from EMNIST and MINST datasets. Our CNN model achieves 85.90\% accuracy across 62 character classes.
 
 \end{abstract}\maketitle
 
@@ -52,11 +52,26 @@ Even the rise of computers, handwritten notes are still a popular method to writ
 
 \section{Related Work}
 \begin{itemize}
-    \item Traditional OCR approaches (rule-based, template matching)
-    \item Deep learning for character recognition (LeNet, modern CNN architectures)
-    \item Prior work on MNIST/EMNIST classification benchmarks
-    \item Language modeling and text prediction (n-grams, Markov models)
-    \item Existing end-to-end handwriting recognition systems
+    \item most OCR systems use template matching, where images are compared against glyph prototypes from known fonts \cite{Eikvil:1993}. these worked on clean inputs but werent great with messy handwriting or strange fonts because they required the templates for every font.
+    \item a 1998 paper made LeNet-5, a CNN that learned handwriting without manual feature creation \cite{LeCun:1998}. they created the CNN structure we use today (convolution, pooling, fully connected layers), and got 99\%+ on MNIST. this is what was used commercially after it came out.
+    \item the MNIST is the standard benchmark for character recognition. Cohen extended this into EMNIST by adding uppercase and lowercase letters to bring it up to 62 classes \cite{EMNIST:1}.
+    \item n gram language models predict the next word/character based on n-1 previous chars, using markov assumption that the only context that matters is the recent one. theyre good for spellcheck and short autofill.
+    \item modern recognition combines CNNs with recurrent networks (networks that have memory), and use CTC loss for training (so that they dont need character level segmentation) \cite{Shi:2016}. Tesseract 4.0 used this and gets 95\%+ accuracy on character recognition now. We are simulating this but instead of having it as one model/program we keep them modular, only linked by the runner script.
+\end{itemize}
+
+\section{Related Work}
+\begin{itemize}
+    \item Traditional OCR systems used template matching, where character images are compared against stored glyph prototypes from known fonts \cite{Eikvil:1993}. These rule-based approaches worked well on clean, constrained inputs but struggled with novel fonts and handwriting because they required extensive libraries of character templates for each font they could recognize.
+    
+    \item LeCun et al.'s 1998 paper introduced LeNet-5, a convolutional neural network that learned to recognize handwritten digits end-to-end without manual feature engineering \cite{LeCun:1998}. LeNet established the fundamental CNN structure we still use today (convolution, pooling, fully connected layers) and achieved under 1\% error on MNIST. It was deployed commercially for reading handwritten checks and inspired later architectures like AlexNet and ResNet.
+    
+    \item The MNIST dataset (70,000 handwritten digit images) became the standard benchmark for character recognition. Cohen et al. extended this with EMNIST in 2017, adding uppercase and lowercase letters to create a 62-class task while keeping the same 28x28 grayscale format \cite{Cohen:2017}. Their baseline results showed 51.80\% accuracy with linear classifiers and 77.57\% with neural networks. Ciresan et al. achieved 88.12\% using committees of deep CNNs \cite{ICDAR:2011}, and recent work like SpinalNet has reached over 91\% on balanced splits \cite{SpinalNet:2023}.
+    
+    \item N-gram language models predict the next word or character based on the previous n-1 elements, using the Markov assumption that only recent context matters. The math dates back to Markov's 1913 work on letter sequences, with Shannon applying it to English in 1948. These models are simple and efficient for tasks like spelling correction and text prediction, especially when trained on large corpora like Common Crawl.
+    
+    \item Modern end-to-end handwriting recognition combines CNNs with recurrent networks (LSTMs) and uses CTC loss for training \cite{Shi:2016}. CTC allows the network to learn from unaligned data without character-level segmentation. Tesseract 4.0 adopted this LSTM-based approach and saw major accuracy gains over its legacy engine. State-of-the-art systems on benchmarks like IAM now achieve character error rates below 5\%.
+    
+    \item Our approach differs by keeping a modular pipeline: Tesseract for segmentation, a custom CNN for EMNIST classification, and a separate Markov model for prediction. This lets us optimize each component independently and see what's happening at each stage.
 \end{itemize}
 
 \section{Preliminaries}
@@ -167,17 +182,13 @@ Correct: 9921/10000
     \item There are quite a few practical applications to the mix of Markov models and CNNs for handwritten text recognition. For one thing there is the easy answer in saying that nearly anything a CNN is used for the markov could be included to improve it's accuracy. for example, license plate recognition could be improved by using a markov model to predict the next character based on state specific license plate formats. We specifically were thinking of handwriting because of note taking and digitization because we are viewing it through the lens of students, but there are swathes of other contexts in which people write things, and this would be useful for all of them.
 \end{itemize}
 
-\begin{equation}
-    \int_a^b x^2\;\mathrm{d}x= \tfrac{1}{3} x^3 \Big|_a^b
-\end{equation}
-
 \section{Github Link \& Team Contributions}
 You can find the complete project repository at \href{https://github.com/jgeorge123george/CS4100_final_project}{\texttt{github.com/jgeorge123george/CS4100\_final\_project}}.
 
 \subsection{Team Contributions}
 \begin{itemize}
-    \item \textbf{Joseph George:} [Specify contributions]
-    \item \textbf{Tammer Haddad:} [Specify contributions]
+    \item \textbf{Tammer Haddad:} Came up with idea for project. Expanded CNN from just MNIST to full EMNIST. Created Markov model for text prediction. Combined the models to create the pipeline. Wrote majority of report.
+    \item \textbf{Joseph George:} Created original MNIST CNN for handwritten digit recognition. Ran Tesseract OCR for character segmentation. Wrote Abstract and Introduction of report, and edited report from simplified bullet points to full sentences and formal paragraphs.
 \end{itemize}
 
 \begin{thebibliography}{9}
@@ -190,6 +201,14 @@ Ciresan, D. C., Meier, U., Gambardella, L. M., and Schmidhuber, J. "Convolutiona
 \bibitem{SpinalNet:2023}
 Kabir, H M Dipu, et al. "SpinalNet: Deep Neural Network With Gradual Input." \textit{IEEE Transactions on Artificial Intelligence}, vol. 4, no. 5, Oct. 2023, pp. 1165--77. https://doi.org/10.1109/TAI.2022.3185179.
 
+\bibitem{LeCun:1998}
+LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. "Gradient-Based Learning Applied to Document Recognition." \textit{Proceedings of the IEEE}, vol. 86, no. 11, pp. 2278--2324, 1998.
+
+\bibitem{Eikvil:1993}
+Eikvil, L. "Optical Character Recognition." Norsk Regnesentral Technical Report, 1993.
+
+\bibitem{Shi:2016}
+Shi, B., Bai, X., and Yao, C. "An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition." \textit{IEEE Transactions on Pattern Analysis and Machine Intelligence}, vol. 39, no. 11, pp. 2298--2304, 2016.
 
 \end{thebibliography}
 
